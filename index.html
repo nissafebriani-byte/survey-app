@@ -5,14 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Element Survey</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f7f7f7; margin: 0; padding: 0; }
-    .container { background: white; max-width: 600px; margin: 50px auto; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #333; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    select, input, button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 6px; border: 1px solid #ccc; }
-    button { background: #007bff; color: white; border: none; cursor: pointer; margin-top: 20px; }
-    button:hover { background: #0056b3; }
-    #message { margin-top: 15px; text-align: center; color: #666; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0; padding: 0;
+    }
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 25px 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    label { font-weight: bold; margin-top: 15px; display: block; }
+    select, button, input {
+      width: 100%; padding: 10px; margin-top: 10px;
+      border-radius: 6px; border: 1px solid #ccc;
+    }
+    #elementsGrid {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 20px;
+    }
+    .element-btn {
+      padding: 10px 14px;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .element-btn:hover {
+      background: #e0e0ff;
+    }
+    .element-btn.selected {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
+    }
+    .tooltip {
+      visibility: hidden;
+      width: 220px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%; left: 50%;
+      margin-left: -110px;
+      opacity: 0; transition: opacity 0.2s;
+      font-size: 13px;
+    }
+    .element-btn:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    #warning {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+    #submitBtn {
+      background: #28a745;
+      color: white;
+      font-weight: bold;
+    }
+    #submitBtn:hover {
+      background: #1f8838;
+    }
   </style>
 </head>
 <body>
@@ -24,32 +91,117 @@
       <option>Loading centers...</option>
     </select>
 
-    <button id="startBtn" disabled>Start Survey</button>
-    <div id="message"></div>
+    <div id="elementsGrid"></div>
+    <div id="warning"></div>
+    <button id="submitBtn" disabled>Submit Responses</button>
   </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw2e6l7-3dqG37LBBJ-XaGIHOWThhmjdqFVkHrvBYySKnDf_0VIIXuvpQTrkAPR4o1WHA/exec";
 
+    let selectedCenter = "";
+    let selectedElements = {};
+    let hasSubmitted = {};
+
     async function loadCenters() {
-      try {
-        const res = await fetch(API_URL + "?action=centers");
-        if (!res.ok) throw new Error("Request failed");
-        const centers = await res.json();
-        const select = document.getElementById("centerSelect");
-        select.innerHTML = '<option value="">-- Select Center --</option>';
-        centers.forEach(center => {
-          const opt = document.createElement("option");
-          opt.value = center;
-          opt.textContent = center;
-          select.appendChild(opt);
+      const res = await fetch(API_URL + "?action=centers");
+      const centers = await res.json();
+      const select = document.getElementById("centerSelect");
+      select.innerHTML = '<option value="">-- Select Center --</option>';
+      centers.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadElements(center) {
+      document.getElementById("elementsGrid").innerHTML = "Loading elements...";
+      const res = await fetch(API_URL + "?action=elements&center=" + encodeURIComponent(center));
+      const data = await res.json(); // { DomainA: [{name,desc}], DomainB: [...] }
+      renderElements(data);
+    }
+
+    function renderElements(domains) {
+      const grid = document.getElementById("elementsGrid");
+      grid.innerHTML = "";
+      Object.keys(domains).forEach(domain => {
+        const h2 = document.createElement("h2");
+        h2.textContent = domain;
+        grid.appendChild(h2);
+
+        domains[domain].forEach(el => {
+          const btn = document.createElement("button");
+          btn.className = "element-btn";
+          btn.textContent = el.name;
+          const tip = document.createElement("span");
+          tip.className = "tooltip";
+          tip.textContent = el.desc || "No description";
+          btn.appendChild(tip);
+
+          btn.onclick = () => toggleElement(el.name, btn);
+          grid.appendChild(btn);
         });
-        document.getElementById("startBtn").disabled = false;
-      } catch (err) {
-        document.getElementById("centerSelect").innerHTML = '<option>Error loading centers</option>';
-        console.error(err);
+      });
+      document.getElementById("submitBtn").disabled = false;
+    }
+
+    function toggleElement(name, btn) {
+      const warning = document.getElementById("warning");
+      warning.textContent = "";
+      if (!selectedElements[selectedCenter]) selectedElements[selectedCenter] = [];
+
+      const list = selectedElements[selectedCenter];
+      const idx = list.indexOf(name);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+        btn.classList.remove("selected");
+      } else {
+        if (list.length >= 20) {
+          warning.textContent = "⚠️ You can select up to 20 elements only.";
+          return;
+        }
+        list.push(name);
+        btn.classList.add("selected");
       }
     }
+
+    document.getElementById("centerSelect").addEventListener("change", async (e) => {
+      const center = e.target.value;
+      const warning = document.getElementById("warning");
+
+      if (selectedCenter && !hasSubmitted[selectedCenter]) {
+        e.target.value = selectedCenter;
+        warning.textContent = "⚠️ Please submit your current center before moving to another.";
+        return;
+      }
+
+      selectedCenter = center;
+      if (center) {
+        warning.textContent = "";
+        await loadElements(center);
+      } else {
+        document.getElementById("elementsGrid").innerHTML = "";
+      }
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      if (!selectedCenter) return alert("Select a center first.");
+      const responses = selectedElements[selectedCenter] || [];
+      if (responses.length === 0) return alert("Please select at least one element.");
+
+      // send to server
+      const payload = { action: "save", center: selectedCenter, elements: responses };
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" }
+      });
+
+      hasSubmitted[selectedCenter] = true;
+      alert("Responses submitted successfully for " + selectedCenter);
+    });
 
     loadCenters();
   </script>

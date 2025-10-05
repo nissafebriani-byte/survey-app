@@ -1,382 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Element Survey</title>
   <style>
-    :root {
-      --bg: #f6f7fb;
-      --card: #fff;
-      --muted: #6b7280;
-      --primary: #2563eb;
-      --success: #16a34a;
-      --danger: #dc2626;
-    }
     body {
-      font-family: Inter, system-ui, Arial, sans-serif;
-      background: var(--bg);
-      margin: 0; padding: 24px;
-      color: #111827;
+      font-family: Arial, sans-serif;
+      background: #f2f4f8;
+      padding: 20px;
     }
     .container {
-      max-width: 920px;
-      margin: 0 auto;
-      background: var(--card);
-      padding: 22px;
-      border-radius: 12px;
-      box-shadow: 0 6px 24px rgba(2,6,23,0.06);
-    }
-    h1 { margin: 0 0 12px 0; font-size: 20px; }
-    .row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
-    .col { flex: 1; min-width: 200px; }
-    input[type="text"], input[type="email"], select {
-      width: 100%; padding: 10px 12px; border-radius: 8px;
-      border: 1px solid #e6e8f0; font-size: 14px; box-sizing: border-box;
-    }
-    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    #elementsGrid { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 10px; align-items: start; }
-    .domain-title { grid-column: 1 / -1; font-weight: 600; margin-top: 12px; color: #374151; }
-    .element-btn {
-      display: inline-block;
-      position: relative;
-      padding: 10px 12px;
+      background: white;
+      max-width: 700px;
+      margin: auto;
+      padding: 30px;
       border-radius: 10px;
-      border: 1px solid #e6e7eb;
-      background: #f3f4f6;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; color: #333; }
+    button {
+      background-color: #e6e6e6;
+      border: none;
+      padding: 8px 12px;
+      margin: 5px;
+      border-radius: 6px;
       cursor: pointer;
-      text-align: left;
-      min-height: 46px;
-      transition: transform .08s ease, box-shadow .08s ease;
-      font-size: 14px;
-      user-select: none;
+      transition: all 0.2s ease;
+      position: relative;
     }
-    .element-btn:hover { transform: translateY(-2px); }
-    .element-btn.selected {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: white;
-      box-shadow: 0 6px 18px rgba(37,99,235,0.15);
-    }
-    .tooltip {
+    button:hover::after {
+      content: attr(data-desc);
       position: absolute;
+      top: 110%;
       left: 50%;
       transform: translateX(-50%);
-      bottom: calc(100% + 8px);
-      background: rgba(17,24,39,0.95);
+      background: #333;
       color: #fff;
-      padding: 8px 10px;
-      border-radius: 8px;
-      min-width: 200px;
-      max-width: 320px;
-      font-size: 13px;
-      line-height: 1.3;
-      display: none;
-      z-index: 30;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+      padding: 8px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-size: 12px;
+      width: 220px;
+      z-index: 10;
     }
-    .element-btn:hover .tooltip { display: block; }
-    .controls { display:flex; gap:12px; align-items:center; margin-top: 16px; flex-wrap:wrap; }
-    .btn {
-      padding: 10px 14px; border-radius: 10px; border: none; cursor: pointer; font-weight:600;
+    button.selected {
+      background-color: #4caf50;
+      color: white;
     }
-    .btn.primary { background: var(--primary); color: white; }
-    .btn.ghost { background: transparent; border: 1px solid #e6e7eb; color: #111827; }
-    #warning { color: var(--danger); margin-top: 8px; font-weight:600; }
-    #info { color: #374151; margin-top: 6px; font-size: 14px; }
-    .small { font-size: 13px; color: var(--muted); }
-    .count { font-weight:700; margin-left: 8px; }
-    .submitted-badge {
-      background: var(--success); color: white; padding: 6px 10px; border-radius: 999px; font-weight:600; font-size:13px;
-    }
+    .warning { color: red; font-weight: bold; }
+    .hidden { display: none; }
+    .domain { margin-top: 15px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Top Topics in Life Management — Survey</h1>
+    <h1>Element Survey</h1>
 
-    <div class="row">
-      <div class="col">
-        <label for="name">Full name</label>
-        <input id="name" type="text" placeholder="Your full name">
-      </div>
-      <div class="col">
-        <label for="email">Email</label>
-        <input id="email" type="email" placeholder="you@example.com">
-      </div>
+    <div id="info-form">
+      <p><b>Name:</b><br><input id="name" required></p>
+      <p><b>Email:</b><br><input id="email" required></p>
+      <p><b>Institution:</b><br><input id="institution" required></p>
+      <p><b>Position:</b><br><input id="position" required></p>
+      <button id="startBtn">Start Survey</button>
     </div>
 
-    <div class="row">
-      <div class="col">
-        <label for="institution">Institution / Organization</label>
-        <input id="institution" type="text" placeholder="Your institution">
-      </div>
-      <div class="col">
-        <label for="position">Position / Role</label>
-        <input id="position" type="text" placeholder="Your position">
-      </div>
+    <div id="survey" class="hidden">
+      <h2 id="center-title"></h2>
+      <div id="domains"></div>
+      <p id="warning" class="warning"></p>
+      <button id="submitCenterBtn">Submit This Center</button>
     </div>
 
-    <div style="margin-top:14px">
-      <label for="centerSelect">Choose center</label>
-      <select id="centerSelect"><option>Loading centers...</option></select>
-      <div id="info" class="small">Select a center, pick up to <strong>20</strong> elements, then click submit. You must submit the current center before choosing another.</div>
+    <div id="done" class="hidden">
+      <h2>Thank you! Your responses have been submitted.</h2>
     </div>
-
-    <div id="elementsGrid" aria-live="polite"></div>
-
-    <div class="controls">
-      <div style="display:flex; align-items:center; gap:8px">
-        <button id="submitBtn" class="btn primary" disabled>Submit this center</button>
-        <button id="resetBtn" class="btn ghost">Clear selections</button>
-        <span id="selectedCount" class="small">0 of 20 selected</span>
-      </div>
-
-      <div style="margin-left:auto; display:flex; gap:8px; align-items:center">
-        <div id="submittedBadge" style="display:none" class="submitted-badge">Submitted</div>
-      </div>
-    </div>
-
-    <div id="warning" role="alert" aria-live="assertive"></div>
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbw2e6l7-3dqG37LBBJ-XaGIHOWThhmjdqFVkHrvBYySKnDf_0VIIXuvpQTrkAPR4o1WHA/exec";
+    const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbw2e6l7-3dqG37LBBJ-XaGIHOWThhmjdqFVkHrvBYySKnDf_0VIIXuvpQTrkAPR4o1WHA/exec";
+    let centers = [];
+    let currentCenterIndex = 0;
+    let responses = {};
 
-    let selectedCenter = "";
-    const selectedElements = {}; // { center: [names] }
-    const hasSubmitted = {};     // { center: true }
-    const MAX_PER_CENTER = 20;
-
-    const centerSelect = document.getElementById('centerSelect');
-    const elementsGrid = document.getElementById('elementsGrid');
-    const warningEl = document.getElementById('warning');
-    const submitBtn = document.getElementById('submitBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const selectedCount = document.getElementById('selectedCount');
-    const submittedBadge = document.getElementById('submittedBadge');
-
-    // load centers from API
-    async function loadCenters() {
-      try {
-        const res = await fetch(API_URL + "?action=centers");
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const centers = await res.json();
-        centerSelect.innerHTML = "<option value=''>-- choose center --</option>";
-        centers.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c;
-          opt.textContent = c;
-          centerSelect.appendChild(opt);
-        });
-      } catch (err) {
-        centerSelect.innerHTML = "<option value=''>Unable to load centers</option>";
-        console.error(err);
-        warningEl.textContent = "Failed to load centers. Check API permissions and deployment.";
-      }
+    async function fetchCenters() {
+      const res = await fetch(DEPLOY_URL + "?action=getCenters");
+      return res.json();
     }
 
-    // load elements for a center
-    async function loadElements(center) {
-      elementsGrid.innerHTML = "Loading elements...";
-      warningEl.textContent = "";
-      submittedBadge.style.display = 'none';
-      try {
-        const res = await fetch(API_URL + "?action=elements&center=" + encodeURIComponent(center));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json(); // { Domain: [{name,desc}] }
-        renderElements(data, center);
-      } catch (err) {
-        elementsGrid.innerHTML = "<div class='small'>Failed to load elements.</div>";
-        console.error(err);
-        warningEl.textContent = "Failed to load elements for this center.";
-      }
+    async function fetchElements(center) {
+      const res = await fetch(DEPLOY_URL + "?action=getElements&center=" + encodeURIComponent(center));
+      return res.json();
     }
 
-    function renderElements(domains, center) {
-      elementsGrid.innerHTML = "";
-      // maintain existing selection array
-      if (!selectedElements[center]) selectedElements[center] = [];
+    document.getElementById("startBtn").onclick = async () => {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const inst = document.getElementById("institution").value.trim();
+      const pos = document.getElementById("position").value.trim();
 
-      Object.keys(domains).forEach(domain => {
-        const title = document.createElement('div');
-        title.className = 'domain-title';
-        title.textContent = domain || "General";
-        elementsGrid.appendChild(title);
+      if (!name || !email || !inst || !pos) {
+        alert("Please fill all fields first!");
+        return;
+      }
 
-        domains[domain].forEach(item => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'element-btn';
-          btn.setAttribute('aria-pressed', 'false');
-          btn.dataset.name = item.name;
+      centers = await fetchCenters();
+      if (!centers.length) {
+        alert("No centers found.");
+        return;
+      }
 
-          // label + tooltip
-          const labelSpan = document.createElement('div');
-          labelSpan.textContent = item.name;
-          labelSpan.style.fontWeight = '600';
-          labelSpan.style.marginBottom = '6px';
-          const descSpan = document.createElement('span');
-          descSpan.className = 'tooltip';
-          descSpan.textContent = item.desc || 'No description';
-          btn.appendChild(labelSpan);
-          btn.appendChild(descSpan);
+      document.getElementById("info-form").classList.add("hidden");
+      document.getElementById("survey").classList.remove("hidden");
+      loadCenter();
+    };
 
-          // apply selected state if already chosen
-          if ((selectedElements[center] || []).includes(item.name)) {
-            btn.classList.add('selected');
-            btn.setAttribute('aria-pressed', 'true');
-          }
+    async function loadCenter() {
+      const center = centers[currentCenterIndex];
+      document.getElementById("center-title").textContent = "Center: " + center;
+      document.getElementById("warning").textContent = "";
+      const data = await fetchElements(center);
+      const container = document.getElementById("domains");
+      container.innerHTML = "";
 
-          btn.addEventListener('click', () => {
-            toggleElement(center, item.name, btn);
-          });
+      Object.keys(data).forEach(domain => {
+        const div = document.createElement("div");
+        div.className = "domain";
+        const h3 = document.createElement("h3");
+        h3.textContent = domain;
+        div.appendChild(h3);
 
-          elementsGrid.appendChild(btn);
+        data[domain].forEach(el => {
+          const btn = document.createElement("button");
+          btn.textContent = el.name;
+          btn.dataset.desc = el.desc;
+          btn.onclick = () => toggleElement(center, el.name, btn);
+          div.appendChild(btn);
         });
+        container.appendChild(div);
       });
-
-      updateCountDisplay(center);
-      // if already submitted show badge and disable selection
-      if (hasSubmitted[center]) {
-        submittedBadge.style.display = 'inline-block';
-        disableElementButtons(true);
-        submitBtn.disabled = true;
-      } else {
-        submittedBadge.style.display = 'none';
-        disableElementButtons(false);
-        submitBtn.disabled = false;
-      }
     }
 
     function toggleElement(center, name, btn) {
-      warningEl.textContent = "";
-      if (!selectedElements[center]) selectedElements[center] = [];
-      const arr = selectedElements[center];
+      if (!responses[center]) responses[center] = [];
+      const arr = responses[center];
       const idx = arr.indexOf(name);
-      if (idx >= 0) {
-        arr.splice(idx, 1);
-        btn.classList.remove('selected');
-        btn.setAttribute('aria-pressed', 'false');
-      } else {
-        if (arr.length >= MAX_PER_CENTER) {
-          warningEl.textContent = `⚠️ You can only select up to ${MAX_PER_CENTER} elements for this center.`;
+
+      if (idx === -1) {
+        if (arr.length >= 20) {
+          document.getElementById("warning").textContent = "You can only choose up to 20 elements for this center.";
           return;
         }
         arr.push(name);
-        btn.classList.add('selected');
-        btn.setAttribute('aria-pressed', 'true');
-      }
-      updateCountDisplay(center);
-    }
-
-    function updateCountDisplay(center) {
-      const count = (selectedElements[center] || []).length;
-      selectedCount.textContent = `${count} of ${MAX_PER_CENTER} selected`;
-    }
-
-    function disableElementButtons(disable) {
-      const btns = elementsGrid.querySelectorAll('.element-btn');
-      btns.forEach(b => b.disabled = !!disable);
-      resetBtn.disabled = !!disable;
-    }
-
-    centerSelect.addEventListener('change', async (e) => {
-      const newCenter = e.target.value;
-      // if user tries to switch while current center not submitted
-      if (selectedCenter && selectedCenter !== newCenter && !hasSubmitted[selectedCenter]) {
-        // revert selection
-        e.target.value = selectedCenter;
-        warningEl.textContent = "⚠️ Please submit your current center before switching to another center.";
-        return;
-      }
-      // update selected center and load elements
-      selectedCenter = newCenter;
-      if (newCenter) {
-        await loadElements(newCenter);
+        btn.classList.add("selected");
       } else {
-        elementsGrid.innerHTML = "";
-        selectedCount.textContent = `0 of ${MAX_PER_CENTER} selected`;
+        arr.splice(idx, 1);
+        btn.classList.remove("selected");
       }
-    });
+      document.getElementById("warning").textContent = "";
+    }
 
-    // clear current selections for this center
-    resetBtn.addEventListener('click', () => {
-      if (!selectedCenter) return;
-      if (hasSubmitted[selectedCenter]) {
-        warningEl.textContent = "You already submitted this center and cannot change it.";
-        return;
-      }
-      selectedElements[selectedCenter] = [];
-      // remove selected classes
-      elementsGrid.querySelectorAll('.element-btn.selected').forEach(b => {
-        b.classList.remove('selected');
-        b.setAttribute('aria-pressed', 'false');
-      });
-      updateCountDisplay(selectedCenter);
-      warningEl.textContent = "";
-    });
-
-    // submit current center's selections along with participant info
-    submitBtn.addEventListener('click', async () => {
-      if (!selectedCenter) { warningEl.textContent = "Please choose a center first."; return; }
-
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const institution = document.getElementById('institution').value.trim();
-      const position = document.getElementById('position').value.trim();
-
-      if (!name || !email || !institution || !position) {
-        warningEl.textContent = "Please fill your name, email, institution and position before submitting.";
+    document.getElementById("submitCenterBtn").onclick = async () => {
+      const center = centers[currentCenterIndex];
+      if (!responses[center] || responses[center].length === 0) {
+        alert("Please select at least one element before submitting.");
         return;
       }
 
-      const selectedList = selectedElements[selectedCenter] || [];
-      if (selectedList.length === 0) {
-        warningEl.textContent = "Please select at least one element before submitting.";
-        return;
-      }
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const inst = document.getElementById("institution").value.trim();
+      const pos = document.getElementById("position").value.trim();
 
-      // Build payload in the format your Apps Script expects
       const payload = {
-        name,
-        email,
-        institution,
-        position,
-        responses: {
-          [selectedCenter]: selectedList
-        }
+        name, email, institution: inst, position: pos,
+        responses: { [center]: responses[center] }
       };
 
       try {
-        submitBtn.disabled = true;
-        warningEl.style.color = ""; // reset
-        warningEl.textContent = "Submitting...";
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+        const res = await fetch(DEPLOY_URL + "?action=saveAllResponses", {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json" }
         });
-        const text = await res.text();
-        if (text.trim().startsWith("OK")) {
-          hasSubmitted[selectedCenter] = true;
-          submittedBadge.style.display = 'inline-block';
-          disableElementButtons(true);
-          warningEl.style.color = "";
-          warningEl.textContent = `Responses saved for "${selectedCenter}". You may now switch to another center.`;
-        } else {
-          throw new Error(text || 'Server error');
-        }
-      } catch (err) {
-        console.error(err);
-        warningEl.style.color = 'var(--danger)';
-        warningEl.textContent = "Failed to submit — " + (err.message || 'network error');
-        submitBtn.disabled = false;
-      }
-    });
+        if (!res.ok) throw new Error("Network error");
+        alert("Responses for " + center + " submitted!");
 
-    // initial load
-    loadCenters();
+        currentCenterIndex++;
+        if (currentCenterIndex < centers.length) {
+          loadCenter();
+        } else {
+          document.getElementById("survey").classList.add("hidden");
+          document.getElementById("done").classList.remove("hidden");
+        }
+      } catch (e) {
+        alert("Failed to submit — " + e.message);
+      }
+    };
   </script>
 </body>
 </html>

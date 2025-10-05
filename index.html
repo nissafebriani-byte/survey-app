@@ -25,7 +25,6 @@
     }
     .page { display: none; }
     .page.active { display: block; }
-
     .form-row { margin-bottom: 12px; }
     .input {
       width: 100%; padding: 12px 14px;
@@ -43,7 +42,6 @@
       background: var(--primary); color: white;
     }
     .btn.primary:disabled { background: #9ca3af; border-color: #9ca3af; cursor: not-allowed; }
-
     .center-header {
       display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
       margin-bottom: 12px;
@@ -64,10 +62,8 @@
     }
     .el:hover { background: #e5e7eb; }
     .el.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
-
     .nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
     .counter { font-weight: 600; }
-
     #descBox {
       position: fixed; left: 16px; bottom: 16px;
       max-width: 360px; min-height: 44px;
@@ -111,7 +107,6 @@
         <div class="subtle" id="progressText"></div>
       </div>
       <div id="content"></div>
-
       <div class="nav">
         <button class="btn" id="btnPrev" onclick="prevCenter()">Previous</button>
         <div class="counter" id="selCount">0 of 20 selected</div>
@@ -130,4 +125,141 @@
 
   <script>
     const MAX_PER_CENTER = 20;
-    cons
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz_VOfAmqWR8NRLJ2stbu4jFUGdc3IE5blVb1cDTwGxUe-BUVvAeJIn9qeVh2iciQcdgA/exec";
+
+    let centers = [];
+    let current = 0;
+    let selections = {};
+    let participant = {};
+
+    async function start() {
+      participant = {
+        name: document.getElementById("name").value.trim(),
+        institution: document.getElementById("institution").value.trim(),
+        position: document.getElementById("position").value.trim(),
+        email: document.getElementById("email").value.trim()
+      };
+      if (!participant.name || !participant.institution || !participant.position || !participant.email) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      const res = await fetch(`${WEBAPP_URL}?action=centers`);
+      centers = await res.json();
+
+      if (!centers.length) {
+        alert("No centers found in Elements tab");
+        return;
+      }
+
+      show("pageInfo", false);
+      show("pageCenter", true);
+      loadCenter(current);
+    }
+
+    async function loadCenter(idx) {
+      const centerName = centers[idx];
+      document.getElementById("centerTitle").textContent = centerName;
+      document.getElementById("progressText").textContent = `Page ${idx + 1} of ${centers.length}`;
+      document.getElementById("selCount").textContent = `${(selections[centerName] || []).length} of ${MAX_PER_CENTER} selected`;
+
+      const res = await fetch(`${WEBAPP_URL}?action=elements&center=${encodeURIComponent(centerName)}`);
+      const grouped = await res.json();
+      renderCenter(centerName, grouped);
+    }
+
+    function renderCenter(centerName, grouped) {
+      const container = document.getElementById("content");
+      container.innerHTML = "";
+      if (!selections[centerName]) selections[centerName] = [];
+
+      Object.keys(grouped).forEach(domain => {
+        const head = document.createElement("div");
+        head.className = "domain";
+        head.textContent = domain;
+        container.appendChild(head);
+
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        grouped[domain].forEach(item => {
+          const btn = document.createElement("div");
+          btn.className = "el";
+          btn.textContent = item.name;
+
+          if (selections[centerName].includes(item.name)) btn.classList.add("selected");
+
+          btn.addEventListener("mouseenter", () => setDesc(item.desc || "No description"));
+          btn.addEventListener("mouseleave", () => setDesc("Hover over an element to see its description"));
+
+          btn.addEventListener("click", () => {
+            const list = selections[centerName];
+            const i = list.indexOf(item.name);
+            if (i > -1) {
+              list.splice(i, 1);
+              btn.classList.remove("selected");
+            } else {
+              if (list.length >= MAX_PER_CENTER) {
+                alert(`You can select up to ${MAX_PER_CENTER} elements`);
+                return;
+              }
+              list.push(item.name);
+              btn.classList.add("selected");
+            }
+            document.getElementById("selCount").textContent = `${list.length} of ${MAX_PER_CENTER} selected`;
+          });
+
+          grid.appendChild(btn);
+        });
+
+        container.appendChild(grid);
+      });
+
+      document.getElementById("btnPrev").disabled = current === 0;
+      document.getElementById("btnNext").textContent = current === centers.length - 1 ? "Submit" : "Next";
+    }
+
+    function nextCenter() {
+      if (current < centers.length - 1) {
+        current += 1;
+        loadCenter(current);
+      } else {
+        submitAll();
+      }
+    }
+
+    function prevCenter() {
+      if (current > 0) {
+        current -= 1;
+        loadCenter(current);
+      }
+    }
+
+    async function submitAll() {
+      const payload = { ...participant, responses: selections };
+
+      const res = await fetch(WEBAPP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await res.text();
+      if (text === "OK") {
+        show("pageCenter", false);
+        show("pageDone", true);
+      } else {
+        alert("Server error: " + text);
+      }
+    }
+
+    function setDesc(text) {
+      document.getElementById("descBox").textContent = text;
+    }
+
+    function show(id, on) {
+      document.getElementById(id).classList.toggle("active", !!on);
+    }
+  </script>
+</body>
+</html>

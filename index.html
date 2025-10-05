@@ -1,160 +1,57 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Element Survey</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 30px;
-        background: #fafafa;
-        color: #333;
-      }
-      h1 {
-        color: #2c3e50;
-      }
-      select, input, button {
-        padding: 8px;
-        margin: 5px 0;
-      }
-      .domain {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        padding: 15px;
-        margin: 15px 0;
-      }
-      .element {
-        margin: 5px 0;
-      }
-      .submit {
-        background: #2c3e50;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
-        border-radius: 6px;
-      }
-      .submit:hover {
-        background: #1a242f;
-      }
-    </style>
-  </head>
-  <body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Element Survey</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f7f7f7; margin: 0; padding: 0; }
+    .container { background: white; max-width: 600px; margin: 50px auto; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #333; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    select, input, button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #007bff; color: white; border: none; cursor: pointer; margin-top: 20px; }
+    button:hover { background: #0056b3; }
+    #message { margin-top: 15px; text-align: center; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
     <h1>Element Survey</h1>
 
-    <h3>Participant Information</h3>
-    <input id="name" placeholder="Name" /><br />
-    <input id="institution" placeholder="Institution" /><br />
-    <input id="position" placeholder="Position" /><br />
-    <input id="email" placeholder="Email" /><br />
-
-    <h3>Select Center</h3>
+    <label for="centerSelect">Select Center</label>
     <select id="centerSelect">
-      <option value="">Loading centers...</option>
+      <option>Loading centers...</option>
     </select>
 
-    <div id="elementsContainer"></div>
+    <button id="startBtn" disabled>Start Survey</button>
+    <div id="message"></div>
+  </div>
 
-    <button class="submit" id="submitBtn">Submit</button>
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbw2e6l7-3dqG37LBBJ-XaGIHOWThhmjdqFVkHrvBYySKnDf_0VIIXuvpQTrkAPR4o1WHA/exec";
 
-    <script>
-      const API_URL = "https://script.google.com/macros/s/AKfycbxLqw_ZeL8AH_-0vNCPav9mfMVqIpBVTyusn0Qce8nb10aU0eaTzVnyhVuqmc8r8DlXPQ/exec";
-
-      async function loadCenters() {
-        try {
-          const res = await fetch(`${API_URL}?action=centers`);
-          if (!res.ok) throw new Error("Failed to fetch centers");
-          const centers = await res.json();
-
-          const select = document.getElementById("centerSelect");
-          select.innerHTML = `<option value="">Select a Center</option>`;
-          centers.forEach(c => {
-            const opt = document.createElement("option");
-            opt.value = c;
-            opt.textContent = c;
-            select.appendChild(opt);
-          });
-        } catch (err) {
-          console.error(err);
-          alert("Error loading centers. Check deployment or permission.");
-        }
+    async function loadCenters() {
+      try {
+        const res = await fetch(API_URL + "?action=centers");
+        if (!res.ok) throw new Error("Request failed");
+        const centers = await res.json();
+        const select = document.getElementById("centerSelect");
+        select.innerHTML = '<option value="">-- Select Center --</option>';
+        centers.forEach(center => {
+          const opt = document.createElement("option");
+          opt.value = center;
+          opt.textContent = center;
+          select.appendChild(opt);
+        });
+        document.getElementById("startBtn").disabled = false;
+      } catch (err) {
+        document.getElementById("centerSelect").innerHTML = '<option>Error loading centers</option>';
+        console.error(err);
       }
+    }
 
-      async function loadElements(center) {
-        try {
-          const res = await fetch(`${API_URL}?action=elements&center=${encodeURIComponent(center)}`);
-          if (!res.ok) throw new Error("Failed to fetch elements");
-          const data = await res.json();
-
-          const container = document.getElementById("elementsContainer");
-          container.innerHTML = "";
-          Object.keys(data).forEach(domain => {
-            const domainDiv = document.createElement("div");
-            domainDiv.className = "domain";
-            domainDiv.innerHTML = `<h3>${domain}</h3>`;
-            data[domain].forEach(el => {
-              const div = document.createElement("div");
-              div.className = "element";
-              div.innerHTML = `
-                <label>
-                  <input type="checkbox" value="${el.name}">
-                  <strong>${el.name}</strong> — ${el.desc}
-                </label>`;
-              domainDiv.appendChild(div);
-            });
-            container.appendChild(domainDiv);
-          });
-        } catch (err) {
-          console.error(err);
-          alert("Error loading elements.");
-        }
-      }
-
-      document.getElementById("centerSelect").addEventListener("change", (e) => {
-        const center = e.target.value;
-        if (center) loadElements(center);
-      });
-
-      document.getElementById("submitBtn").addEventListener("click", async () => {
-        const name = document.getElementById("name").value.trim();
-        const institution = document.getElementById("institution").value.trim();
-        const position = document.getElementById("position").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const center = document.getElementById("centerSelect").value;
-
-        if (!center) {
-          alert("Please select a center.");
-          return;
-        }
-
-        const responses = {};
-        const checked = document.querySelectorAll("input[type=checkbox]:checked");
-        const selected = Array.from(checked).map(cb => cb.value);
-        responses[center] = selected;
-
-        const payload = {
-          name,
-          institution,
-          position,
-          email,
-          responses
-        };
-
-        try {
-          const res = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
-          });
-          const text = await res.text();
-          alert(text === "OK" ? "Response submitted successfully!" : text);
-        } catch (err) {
-          console.error(err);
-          alert("Failed to submit response.");
-        }
-      });
-
-      loadCenters();
-    </script>
-  </body>
+    loadCenters();
+  </script>
+</body>
 </html>

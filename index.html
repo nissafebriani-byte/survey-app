@@ -5,28 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Element Survey</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f5f5f5; margin:0; padding:0; }
-  .container { max-width:700px; margin:40px auto; background:#fff; padding:25px 30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-  h1, h2 { text-align:center; color:#333;}
-  label { font-weight:bold; margin-top:15px; display:block;}
-  select, button { width:100%; padding:10px; margin-top:10px; border-radius:6px; border:1px solid #ccc;}
+  body { font-family: Arial, sans-serif; background: #f5f5f5; margin:0; padding:0;}
+  .container { max-width: 800px; margin: 40px auto; background: #fff; padding: 25px 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+  h1 { text-align:center; }
+  label { font-weight:bold; margin-top:15px; display:block; }
+  input, select, button { width:100%; padding:10px; margin-top:10px; border-radius:6px; border:1px solid #ccc; }
+  button { cursor:pointer; }
   #elementsGrid { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;}
-  .element-btn { padding:10px 14px; background:#f0f0f0; border:1px solid #ccc; border-radius:8px; cursor:pointer; position:relative; transition: all 0.2s;}
-  .element-btn:hover { background:#e0e0ff;}
-  .element-btn.selected { background:#007bff; color:white; border-color:#007bff;}
-  .tooltip { visibility:hidden; width:220px; background:#333; color:#fff; text-align:center; border-radius:6px; padding:5px; position:absolute; z-index:1; bottom:125%; left:50%; margin-left:-110px; opacity:0; transition:opacity 0.2s; font-size:13px;}
-  .element-btn:hover .tooltip { visibility:visible; opacity:1;}
-  #warning { color:red; text-align:center; margin-top:10px;}
-  #submitBtn { background:#28a745; color:white; font-weight:bold;}
-  #submitBtn:hover { background:#1f8838;}
+  .element-btn { padding:10px 14px; background:#f0f0f0; border:1px solid #ccc; border-radius:8px; position:relative; transition:all 0.2s; }
+  .element-btn:hover { background:#e0e0ff; }
+  .element-btn.selected { background:#007bff; color:white; border-color:#007bff; }
+  .tooltip { visibility:hidden; width:220px; background-color:#333; color:#fff; text-align:center; border-radius:6px; padding:5px; position:absolute; z-index:1; bottom:125%; left:50%; margin-left:-110px; opacity:0; transition:opacity 0.2s; font-size:13px; }
+  .element-btn:hover .tooltip { visibility:visible; opacity:1; }
+  #warning { color:red; text-align:center; margin-top:10px; }
+  #submitBtn { background:#28a745; color:white; font-weight:bold; }
+  #submitBtn:hover { background:#1f8838; }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>Element Survey</h1>
 
+  <label for="name">Name</label>
+  <input type="text" id="name" placeholder="Your name">
+
+  <label for="institution">Institution</label>
+  <input type="text" id="institution" placeholder="Your institution">
+
+  <label for="position">Position</label>
+  <input type="text" id="position" placeholder="Your position">
+
+  <label for="email">Email</label>
+  <input type="email" id="email" placeholder="Your email">
+
   <label for="centerSelect">Select Center</label>
-  <select id="centerSelect"><option>Loading centers...</option></select>
+  <select id="centerSelect">
+    <option value="">Loading centers...</option>
+  </select>
 
   <div id="elementsGrid"></div>
   <div id="warning"></div>
@@ -34,38 +49,35 @@
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwkquO_elax63PF9LmyF9cizgqNgW_o0Cj2Bk8wR8i2XgLTUWDBr3PcbGVHOVJp9Bz_eA/exec"; // Replace with your Apps Script Web App URL
+const API_URL = "https://script.google.com/macros/s/AKfycbwNhCUnZLjYE5Tyx3-pjCQ5WCmMhpfHRyqK5qqiqnZMkcX0W70L2D9tOF19tCdlD0lcLQ/exec"; // Ganti dengan Web App URL Anda
 
 let selectedCenter = "";
 let selectedElements = {};
 let hasSubmitted = {};
 
+// Load centers dari Apps Script
 async function loadCenters() {
+  const res = await fetch(`${API_URL}?action=centers`);
+  const centers = await res.json();
   const select = document.getElementById("centerSelect");
-  try {
-    const res = await fetch(API_URL + "?action=centers");
-    const centers = await res.json();
-    select.innerHTML = '<option value="">-- Select Center --</option>';
-    centers.forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c;
-      opt.textContent = c;
-      select.appendChild(opt);
-    });
-  } catch(err) {
-    select.innerHTML = '<option>Error loading centers</option>';
-    console.error(err);
-  }
+  select.innerHTML = '<option value="">-- Select Center --</option>';
+  centers.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
 }
 
 async function loadElements(center) {
   const grid = document.getElementById("elementsGrid");
   grid.innerHTML = "Loading elements...";
-  const res = await fetch(API_URL + "?action=elements&center=" + encodeURIComponent(center));
-  const data = await res.json();
+  const res = await fetch(`${API_URL}?action=elements&center=${encodeURIComponent(center)}`);
+  const data = await res.json(); // { DomainA: [{name, desc}], DomainB: [...] }
   renderElements(data);
 }
 
+// Render elemen dalam button per domain
 function renderElements(domains) {
   const grid = document.getElementById("elementsGrid");
   grid.innerHTML = "";
@@ -78,6 +90,7 @@ function renderElements(domains) {
       const btn = document.createElement("button");
       btn.className = "element-btn";
       btn.textContent = el.name;
+
       const tip = document.createElement("span");
       tip.className = "tooltip";
       tip.textContent = el.desc || "No description";
@@ -90,6 +103,7 @@ function renderElements(domains) {
   document.getElementById("submitBtn").disabled = false;
 }
 
+// Toggle elemen, maksimal 20 per center
 function toggleElement(name, btn) {
   const warning = document.getElementById("warning");
   warning.textContent = "";
@@ -110,6 +124,7 @@ function toggleElement(name, btn) {
   }
 }
 
+// Ganti center
 document.getElementById("centerSelect").addEventListener("change", async (e) => {
   const center = e.target.value;
   const warning = document.getElementById("warning");
@@ -129,24 +144,28 @@ document.getElementById("centerSelect").addEventListener("change", async (e) => 
   }
 });
 
+// Submit survey
 document.getElementById("submitBtn").addEventListener("click", async () => {
   if (!selectedCenter) return alert("Select a center first.");
   const responses = selectedElements[selectedCenter] || [];
   if (responses.length === 0) return alert("Please select at least one element.");
 
-  try {
-    const payload = { action: "save", center: selectedCenter, elements: responses };
-    await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
-    });
+  const payload = {
+    name: document.getElementById("name").value,
+    institution: document.getElementById("institution").value,
+    position: document.getElementById("position").value,
+    email: document.getElementById("email").value,
+    responses: { [selectedCenter]: responses }
+  };
 
-    hasSubmitted[selectedCenter] = true;
-    alert("Responses submitted successfully for " + selectedCenter);
-  } catch(err) {
-    alert("Error submitting responses: " + err.message);
-  }
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" }
+  });
+
+  hasSubmitted[selectedCenter] = true;
+  alert("Responses submitted successfully for " + selectedCenter);
 });
 
 loadCenters();

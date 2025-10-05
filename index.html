@@ -7,92 +7,86 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0; padding: 0;
-      background: #f8f9fa;
-      color: #333;
+      background: #f9fafb;
+      margin: 0;
+      padding: 0;
     }
-    header {
-      background: #0066cc;
-      color: white;
-      padding: 1rem;
+    .container {
+      max-width: 700px;
+      background: white;
+      margin: 40px auto;
+      padding: 25px 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
       text-align: center;
     }
-    main {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
     }
-    label { font-weight: bold; }
-    select, input {
+    input, select {
       width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      border-radius: 5px;
+      padding: 8px;
+      margin: 8px 0 16px;
       border: 1px solid #ccc;
-    }
-    .domain {
-      margin-top: 1.5rem;
-      border-top: 1px solid #eee;
-      padding-top: 1rem;
-    }
-    .element {
-      margin: 0.5rem 0;
+      border-radius: 5px;
     }
     button {
-      background: #0066cc;
+      background-color: #007bff;
       color: white;
-      padding: 0.75rem 1.5rem;
       border: none;
+      padding: 10px 20px;
       border-radius: 5px;
       cursor: pointer;
     }
     button:hover {
-      background: #004c99;
+      background-color: #0056b3;
+    }
+    .domain {
+      margin-top: 20px;
+    }
+    .element {
+      margin-left: 15px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Element Survey</h1>
-  </header>
-  <main>
+  <div class="container">
+    <h2>Element Survey</h2>
     <form id="surveyForm">
-      <label for="name">Full Name:</label>
-      <input type="text" id="name" required>
+      <label>Name:</label>
+      <input type="text" id="name" required />
+      <label>Institution:</label>
+      <input type="text" id="institution" required />
+      <label>Position:</label>
+      <input type="text" id="position" required />
+      <label>Email:</label>
+      <input type="email" id="email" required />
 
-      <label for="institution">Institution:</label>
-      <input type="text" id="institution" required>
-
-      <label for="position">Position:</label>
-      <input type="text" id="position" required>
-
-      <label for="email">Email:</label>
-      <input type="email" id="email" required>
-
-      <label for="centerSelect">Select Center:</label>
-      <select id="centerSelect" required>
-        <option value="">Loading centers...</option>
+      <label>Select Center:</label>
+      <select id="centerSelect">
+        <option>Loading centers...</option>
       </select>
 
       <div id="elementsContainer"></div>
 
       <button type="submit">Submit</button>
     </form>
-  </main>
+  </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycSFCS3euQOEpvnm_VwWCUjLoDfAAGX9pkevDfLPTB_9njnELKhoMvlIeYrWKiTb8QLQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbycSFCS3euQOEpvnm_VwWCUjLoDfAAGX9pkevDfLPTB_9njnELKhoMvlIeYrWKiTb8QLQ/exec";
 
-    // Load centers
     async function loadCenters() {
       try {
-        const res = await fetch(SCRIPT_URL + "?action=centers");
+        const res = await fetch(`${API_URL}?action=centers`);
         const centers = await res.json();
+
         const select = document.getElementById("centerSelect");
-        select.innerHTML = '<option value="">Select a center</option>';
+        select.innerHTML = "<option value=''>-- Select Center --</option>";
         centers.forEach(c => {
           const opt = document.createElement("option");
           opt.value = c;
@@ -100,80 +94,82 @@
           select.appendChild(opt);
         });
       } catch (err) {
-        alert("Failed to load centers: " + err);
+        console.error("Error loading centers:", err);
+        alert("Failed to load centers. Check API permissions.");
       }
     }
 
-    // Load elements for selected center
     async function loadElements(center) {
-      const container = document.getElementById("elementsContainer");
-      container.innerHTML = "<p>Loading elements...</p>";
       try {
-        const res = await fetch(SCRIPT_URL + "?action=elements&center=" + encodeURIComponent(center));
+        const res = await fetch(`${API_URL}?action=elements&center=${encodeURIComponent(center)}`);
         const data = await res.json();
+
+        const container = document.getElementById("elementsContainer");
         container.innerHTML = "";
+
         Object.keys(data).forEach(domain => {
-          const div = document.createElement("div");
-          div.classList.add("domain");
-          const h3 = document.createElement("h3");
-          h3.textContent = domain;
-          div.appendChild(h3);
+          const domainDiv = document.createElement("div");
+          domainDiv.classList.add("domain");
+          const domainTitle = document.createElement("h3");
+          domainTitle.textContent = domain;
+          domainDiv.appendChild(domainTitle);
+
           data[domain].forEach(el => {
-            const p = document.createElement("div");
-            p.classList.add("element");
-            p.innerHTML = `
-              <label>
-                <input type="checkbox" name="element" value="${el.name}">
-                <strong>${el.name}</strong> — ${el.desc}
-              </label>`;
-            div.appendChild(p);
+            const elDiv = document.createElement("div");
+            elDiv.classList.add("element");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = el.name;
+            checkbox.id = el.name;
+            const label = document.createElement("label");
+            label.setAttribute("for", el.name);
+            label.textContent = `${el.name} – ${el.desc}`;
+            elDiv.appendChild(checkbox);
+            elDiv.appendChild(label);
+            domainDiv.appendChild(elDiv);
           });
-          container.appendChild(div);
+          container.appendChild(domainDiv);
         });
       } catch (err) {
-        container.innerHTML = "<p>Failed to load elements.</p>";
+        console.error("Error loading elements:", err);
+        alert("Failed to load elements. Check API permissions.");
       }
     }
 
-    // Handle form submission
-    document.getElementById("surveyForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const name = document.getElementById("name").value.trim();
-      const institution = document.getElementById("institution").value.trim();
-      const position = document.getElementById("position").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const center = document.getElementById("centerSelect").value;
-      if (!center) return alert("Please select a center.");
-
-      const responses = {};
-      const checked = document.querySelectorAll("input[name='element']:checked");
-      responses[center] = Array.from(checked).map(c => c.value);
-
-      const payload = { name, institution, position, email, responses };
-
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "application/json" }
-        });
-        const text = await res.text();
-        if (text.includes("OK")) {
-          alert("Thank you! Your response has been recorded.");
-          document.getElementById("surveyForm").reset();
-          document.getElementById("elementsContainer").innerHTML = "";
-        } else {
-          alert("Submission error: " + text);
-        }
-      } catch (err) {
-        alert("Failed to submit: " + err);
-      }
+    document.getElementById("centerSelect").addEventListener("change", e => {
+      const center = e.target.value;
+      if (center) loadElements(center);
     });
 
-    document.getElementById("centerSelect").addEventListener("change", (e) => {
-      const val = e.target.value;
-      if (val) loadElements(val);
+    document.getElementById("surveyForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const institution = document.getElementById("institution").value;
+      const position = document.getElementById("position").value;
+      const email = document.getElementById("email").value;
+      const center = document.getElementById("centerSelect").value;
+
+      const responses = {};
+      const checked = document.querySelectorAll("#elementsContainer input[type=checkbox]:checked");
+      responses[center] = Array.from(checked).map(c => c.value);
+
+      const payload = {
+        name, institution, position, email, responses
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json" },
+        });
+        const text = await res.text();
+        alert("Submitted successfully!");
+        document.getElementById("surveyForm").reset();
+      } catch (err) {
+        console.error("Error submitting:", err);
+        alert("Failed to submit. Please try again.");
+      }
     });
 
     loadCenters();

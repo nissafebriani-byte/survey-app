@@ -1,218 +1,225 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>Element Survey</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 30px;
-      max-width: 900px;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f4f9;
     }
-    .center-section, .form-section {
-      margin-bottom: 25px;
+    h1, h2 {
+      text-align: center;
     }
-    .domain {
-      margin-bottom: 20px;
-    }
-    .elements {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .element-btn {
-      padding: 8px 12px;
-      border: 1px solid #aaa;
-      border-radius: 6px;
-      cursor: pointer;
-      background-color: #f4f4f4;
-      transition: 0.2s;
-      position: relative;
-    }
-    .element-btn.selected {
-      background-color: #cce5ff;
-      border-color: #004085;
-      color: #004085;
-    }
-    .element-btn:hover::after {
-      content: attr(data-desc);
-      position: absolute;
-      background: #333;
-      color: #fff;
-      padding: 6px 10px;
-      border-radius: 6px;
-      white-space: pre-wrap;
-      top: 120%;
-      left: 0;
-      width: 250px;
-      z-index: 5;
-      font-size: 13px;
+    .hidden {
+      display: none;
     }
     button {
       padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background-color: #e0e0e0;
       cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #d5d5d5;
+    }
+    button.selected {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      background-color: #333;
+      color: #fff;
+      text-align: left;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%; 
+      left: 50%;
+      margin-left: -100px;
+      width: 200px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    .center-button {
+      display: block;
+      width: 100%;
+      background-color: #2196F3;
+      color: white;
+      margin: 10px 0;
+    }
+    .submit-btn {
+      background-color: #4CAF50;
+      color: white;
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <h2>Element Survey</h2>
+  <h1>Element Survey</h1>
 
-  <div class="form-section">
-    <label>Name: <input type="text" id="name"></label><br><br>
-    <label>Email: <input type="email" id="email"></label><br><br>
-    <label>Institution: <input type="text" id="institution"></label><br><br>
-    <label>Position: <input type="text" id="position"></label><br><br>
+  <div id="user-form">
+    <h2>Participant Information</h2>
+    <label>Name:</label><br>
+    <input type="text" id="name"><br><br>
+    <label>Email:</label><br>
+    <input type="email" id="email"><br><br>
+    <label>Institution:</label><br>
+    <input type="text" id="institution"><br><br>
+    <label>Position:</label><br>
+    <input type="text" id="position"><br><br>
+    <button id="start-btn">Start Survey</button>
   </div>
 
-  <div class="center-section">
-    <label for="centerSelect">Choose Center:</label>
-    <select id="centerSelect">
-      <option value="">-- Select Center --</option>
-    </select>
+  <div id="survey" class="hidden">
+    <h2>Select a Center</h2>
+    <div id="centers"></div>
+
+    <div id="elements-section" class="hidden">
+      <h2 id="center-title"></h2>
+      <div id="elements"></div>
+      <button id="submit-btn" class="submit-btn">Submit This Center</button>
+    </div>
   </div>
-
-  <div id="elementsContainer"></div>
-
-  <div>
-    <button id="submitBtn">Submit</button>
-  </div>
-
-  <p id="status"></p>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxO_ofoU8MY0tOranDqgMzVGLdGzw_l-wWugTpydaNVhLzrjebvBH9saIbXzE8qOepvww/exec";
-    const MAX_SELECTION = 20;
+    const responses = {};
+    let currentCenter = null;
 
-    let currentCenter = "";
-    let responses = {};
-    let elementsByDomain = {};
-
-    // Load centers
-    fetch(`${SCRIPT_URL}?action=centers`)
-      .then(r => r.json())
-      .then(centers => {
-        const select = document.getElementById("centerSelect");
-        centers.forEach(c => {
-          const opt = document.createElement("option");
-          opt.value = c;
-          opt.textContent = c;
-          select.appendChild(opt);
-        });
-      });
-
-    document.getElementById("centerSelect").addEventListener("change", async e => {
-      const newCenter = e.target.value;
-      const status = document.getElementById("status");
-
-      if (currentCenter && !responses[currentCenter]) {
-        alert("Please submit your selection for the current center before moving to another.");
-        e.target.value = currentCenter;
-        return;
-      }
-
-      currentCenter = newCenter;
-      document.getElementById("elementsContainer").innerHTML = "";
-      if (!newCenter) return;
-
-      const res = await fetch(`${SCRIPT_URL}?action=elements&center=${encodeURIComponent(newCenter)}`);
-      elementsByDomain = await res.json();
-      renderElements();
-      status.textContent = "";
-    });
-
-    function renderElements() {
-      const container = document.getElementById("elementsContainer");
-      container.innerHTML = "";
-
-      for (const domain in elementsByDomain) {
-        const div = document.createElement("div");
-        div.className = "domain";
-
-        const h3 = document.createElement("h3");
-        h3.textContent = domain;
-        div.appendChild(h3);
-
-        const elemsDiv = document.createElement("div");
-        elemsDiv.className = "elements";
-
-        elementsByDomain[domain].forEach(el => {
-          const btn = document.createElement("div");
-          btn.className = "element-btn";
-          btn.textContent = el.name;
-          btn.setAttribute("data-desc", el.desc);
-
-          btn.addEventListener("click", () => {
-            toggleElement(el.name, btn);
-          });
-
-          elemsDiv.appendChild(btn);
-        });
-
-        div.appendChild(elemsDiv);
-        container.appendChild(div);
-      }
-    }
-
-    function toggleElement(name, btn) {
-      const selected = responses[currentCenter] || [];
-      const index = selected.indexOf(name);
-
-      if (index === -1) {
-        if (selected.length >= MAX_SELECTION) {
-          alert("You can only select up to 20 elements per center.");
-          return;
-        }
-        selected.push(name);
-        btn.classList.add("selected");
-      } else {
-        selected.splice(index, 1);
-        btn.classList.remove("selected");
-      }
-
-      responses[currentCenter] = selected;
-    }
-
-    document.getElementById("submitBtn").addEventListener("click", async () => {
+    document.getElementById("start-btn").addEventListener("click", () => {
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
       const institution = document.getElementById("institution").value.trim();
       const position = document.getElementById("position").value.trim();
-      const status = document.getElementById("status");
-
       if (!name || !email || !institution || !position) {
-        alert("Please fill out all personal information fields.");
+        alert("Please fill out all fields.");
+        return;
+      }
+      document.getElementById("user-form").classList.add("hidden");
+      document.getElementById("survey").classList.remove("hidden");
+      loadCenters();
+    });
+
+    async function loadCenters() {
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=centers`);
+        const centers = await res.json();
+        const div = document.getElementById("centers");
+        div.innerHTML = "";
+        centers.forEach(c => {
+          const btn = document.createElement("button");
+          btn.className = "center-button";
+          btn.textContent = c;
+          btn.onclick = () => loadElements(c);
+          div.appendChild(btn);
+        });
+      } catch (err) {
+        alert("Failed to load centers. Please check your connection or Apps Script URL.");
+      }
+    }
+
+    async function loadElements(center) {
+      if (currentCenter && !responses[currentCenter]) {
+        alert("Please submit your selections for the current center before moving to another one.");
         return;
       }
 
-      if (!currentCenter || !responses[currentCenter] || responses[currentCenter].length === 0) {
-        alert("Please select at least one element for the current center.");
+      currentCenter = center;
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=elements&center=${encodeURIComponent(center)}`);
+        const data = await res.json();
+
+        document.getElementById("center-title").textContent = center;
+        document.getElementById("elements-section").classList.remove("hidden");
+
+        const container = document.getElementById("elements");
+        container.innerHTML = "";
+
+        Object.entries(data).forEach(([domain, items]) => {
+          const h3 = document.createElement("h3");
+          h3.textContent = domain;
+          container.appendChild(h3);
+
+          items.forEach(el => {
+            const btn = document.createElement("button");
+            btn.textContent = el.name;
+            btn.classList.add("tooltip");
+
+            const tip = document.createElement("span");
+            tip.className = "tooltiptext";
+            tip.textContent = el.desc;
+            btn.appendChild(tip);
+
+            btn.onclick = () => {
+              const selected = container.querySelectorAll("button.selected").length;
+              if (btn.classList.contains("selected")) {
+                btn.classList.remove("selected");
+              } else if (selected < 20) {
+                btn.classList.add("selected");
+              } else {
+                alert("You can select up to 20 elements per center.");
+              }
+            };
+
+            container.appendChild(btn);
+          });
+        });
+      } catch (err) {
+        alert("Failed to load elements. Please try again.");
+      }
+    }
+
+    document.getElementById("submit-btn").addEventListener("click", async () => {
+      if (!currentCenter) return;
+
+      const selected = Array.from(document.querySelectorAll("#elements button.selected")).map(b => b.textContent);
+      if (selected.length === 0) {
+        alert("Please select at least one element.");
         return;
       }
+
+      responses[currentCenter] = selected;
+      alert(`Selections for ${currentCenter} saved! You can now move to another center.`);
 
       const payload = {
-        name,
-        email,
-        institution,
-        position,
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        institution: document.getElementById("institution").value,
+        position: document.getElementById("position").value,
         responses
       };
-
-      status.textContent = "Submitting...";
 
       try {
         const res = await fetch(SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-          mode: "no-cors"
+          body: JSON.stringify(payload)
         });
-
-        responses[currentCenter] = responses[currentCenter]; // lock current center
-        alert("Submission successful for " + currentCenter);
-        status.textContent = "Submitted successfully!";
+        const text = await res.text();
+        if (text.includes("OK")) {
+          alert("Responses submitted successfully!");
+        } else {
+          alert("Submission error: " + text);
+        }
       } catch (err) {
-        alert("Failed to submit. Please try again.");
-        status.textContent = "Submission failed.";
+        alert("Failed to submit. Please try again later.");
       }
     });
   </script>

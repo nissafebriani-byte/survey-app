@@ -1,264 +1,222 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <base target="_top">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Top Topics in Life Management</title>
   <style>
-    :root {
-      font-family: Inter, system-ui, Arial, sans-serif;
-      color: #111827;
-      --bg: #f9fafb;
-      --card: #ffffff;
-      --muted: #6b7280;
-      --line: #e5e7eb;
-      --btn: #f3f4f6;
-      --btnHover: #e5e7eb;
-      --primary: #2563eb;
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+      text-align: center;
     }
-    body { margin: 0; background: var(--bg); }
-    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px; }
-    h1 { margin: 12px 0 20px 0; font-weight: 600; }
-    .card {
-      background: var(--card); border: 1px solid var(--line);
-      border-radius: 14px; padding: 20px;
-      box-shadow: 0 2px 10px rgba(17,24,39,0.03);
+
+    h1 {
+      background-color: #f8bcbc;
+      color: #222;
+      padding: 20px;
+      margin: 0;
     }
-    .page { display: none; }
-    .page.active { display: block; }
-    .form-row { margin-bottom: 12px; }
-    .input {
-      width: 100%; padding: 12px 14px;
-      border: 1px solid var(--line); border-radius: 10px;
-      background: #fff; font-size: 15px;
+
+    p {
+      background-color: #f8bcbc;
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 4px;
     }
-    .btn {
-      padding: 10px 16px; border: 1px solid var(--line);
-      border-radius: 10px; background: var(--btn); cursor: pointer;
-      font-size: 15px;
+
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: left;
     }
-    .btn:hover { background: var(--btnHover); }
-    .btn.primary {
-      border-color: var(--primary);
-      background: var(--primary); color: white;
+
+    .form-section {
+      margin-top: 20px;
     }
-    .btn.primary:disabled { background: #9ca3af; border-color: #9ca3af; cursor: not-allowed; }
-    .center-header {
-      display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-      margin-bottom: 12px;
+
+    .form-section label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
     }
-    .subtle { color: var(--muted); font-size: 14px; }
+
+    .form-section input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #3b5bfd;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #2f49d1;
+    }
+
     .domain {
-      background: #eef2f7; padding: 8px 12px; border-radius: 10px; font-weight: 600;
-      border: 1px solid #e6ebf2; margin: 16px 0 10px;
+      margin-top: 25px;
     }
-    .grid { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
-    .el {
-      background: #f3f4f6; border: 1px solid var(--line);
-      border-radius: 12px; padding: 10px 12px; text-align: center;
-      cursor: pointer; transition: transform .06s ease, background .15s ease;
-      user-select: none;
+
+    .domain h3 {
+      background-color: #e0e0e0;
+      padding: 10px;
+      border-radius: 5px;
     }
-    .el:hover { background: #e5e7eb; }
-    .el.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
-    .counter { font-weight: 600; }
-    #descBox {
-      position: fixed; left: 16px; bottom: 16px;
-      max-width: 360px; min-height: 44px;
-      background: #111827; color: #fff; padding: 12px 14px;
-      border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12);
-      font-size: 14px; line-height: 1.3; opacity: .92;
+
+    .checkbox-group {
+      margin-bottom: 10px;
     }
+
+    .hidden {
+      display: none;
+    }
+
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Top Topics in Life Management</h1>
-    <p style="margin-bottom: 20px;">
-      Welcome to the Top Topics in Life Management Survey! Your task is to choose which elements you would prioritize buying if you had the money to pay.
-    </p>
+  <h1>Top Topics in Life Management</h1>
+  <p>Welcome to the Top Topics in Life Management Survey! Your task is to choose which elements you would prioritize buying if you had the money to pay.</p>
 
-    <!-- Info Page -->
-    <div id="pageInfo" class="card page active">
-      <div class="form-row">
-        <input class="input" id="name" placeholder="Full name">
+  <div class="container">
+    <div id="intro">
+      <div class="form-section">
+        <label for="name">Name</label>
+        <input id="name" placeholder="Enter your name" />
+
+        <label for="institution">Institution</label>
+        <input id="institution" placeholder="Enter your institution" />
+
+        <label for="position">Position</label>
+        <input id="position" placeholder="Enter your position" />
+
+        <label for="email">Email</label>
+        <input id="email" placeholder="Enter your email" />
+
+        <label for="center">Choose Center</label>
+        <select id="center"></select>
       </div>
-      <div class="form-row">
-        <input class="input" id="institution" placeholder="Institution or organization">
-      </div>
-      <div class="form-row">
-        <input class="input" id="position" placeholder="Position or role">
-      </div>
-      <div class="form-row">
-        <input class="input" id="email" type="email" placeholder="Email">
-      </div>
-      <button class="btn primary" onclick="start()">Start</button>
+      <button id="startBtn">Start</button>
     </div>
 
-    <!-- Center Page -->
-    <div id="pageCenter" class="card page">
-      <div class="center-header">
-        <div>
-          <div id="centerTitle" style="font-size:20px;font-weight:600"></div>
-          <div class="subtle">Select up to 20 elements</div>
-        </div>
-        <div class="subtle" id="progressText"></div>
-      </div>
-      <div id="content"></div>
-      <div class="nav">
-        <button class="btn" id="btnPrev" onclick="prevCenter()">Previous</button>
-        <div class="counter" id="selCount">0 of 20 selected</div>
-        <button class="btn primary" id="btnNext" onclick="nextCenter()">Next</button>
-      </div>
-    </div>
-
-    <!-- Done Page -->
-    <div id="pageDone" class="card page">
-      <h2>Thank you</h2>
-      <p>Your responses have been recorded.</p>
-    </div>
+    <div id="survey" class="hidden"></div>
+    <button id="submitBtn" class="hidden">Submit</button>
   </div>
 
-  <div id="descBox">Hover over an element to see its description</div>
-
   <script>
-    const MAX_PER_CENTER = 20;
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz_VOfAmqWR8NRLJ2stbu4jFUGdc3IE5blVb1cDTwGxUe-BUVvAeJIn9qeVh2iciQcdgA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_mYYsaKGyDvGpmPiBCesb-OxUu2fz4RvcMzJnPbyK9dbxNq2_Ymd6CpSj0HdQYoVLWg/exec";
+    let currentCenter = "";
+    let responses = {};
 
-    let centers = [];
-    let current = 0;
-    let selections = {};
-    let participant = {};
+    document.addEventListener("DOMContentLoaded", () => {
+      loadCenters();
+      document.getElementById("startBtn").addEventListener("click", startSurvey);
+      document.getElementById("submitBtn").addEventListener("click", submitSurvey);
+    });
 
-    async function start() {
-      participant = {
-        name: document.getElementById("name").value.trim(),
-        institution: document.getElementById("institution").value.trim(),
-        position: document.getElementById("position").value.trim(),
-        email: document.getElementById("email").value.trim()
-      };
-      if (!participant.name || !participant.institution || !participant.position || !participant.email) {
-        alert("Please fill all fields");
-        return;
-      }
-
-      const res = await fetch(`${WEBAPP_URL}?action=centers`);
-      centers = await res.json();
-
-      if (!centers.length) {
-        alert("No centers found in Elements tab");
-        return;
-      }
-
-      show("pageInfo", false);
-      show("pageCenter", true);
-      loadCenter(current);
-    }
-
-    async function loadCenter(idx) {
-      const centerName = centers[idx];
-      document.getElementById("centerTitle").textContent = centerName;
-      document.getElementById("progressText").textContent = `Page ${idx + 1} of ${centers.length}`;
-      document.getElementById("selCount").textContent = `${(selections[centerName] || []).length} of ${MAX_PER_CENTER} selected`;
-
-      const res = await fetch(`${WEBAPP_URL}?action=elements&center=${encodeURIComponent(centerName)}`);
-      const grouped = await res.json();
-      renderCenter(centerName, grouped);
-    }
-
-    function renderCenter(centerName, grouped) {
-      const container = document.getElementById("content");
-      container.innerHTML = "";
-      if (!selections[centerName]) selections[centerName] = [];
-
-      Object.keys(grouped).forEach(domain => {
-        const head = document.createElement("div");
-        head.className = "domain";
-        head.textContent = domain;
-        container.appendChild(head);
-
-        const grid = document.createElement("div");
-        grid.className = "grid";
-
-        grouped[domain].forEach(item => {
-          const btn = document.createElement("div");
-          btn.className = "el";
-          btn.textContent = item.name;
-
-          if (selections[centerName].includes(item.name)) btn.classList.add("selected");
-
-          btn.addEventListener("mouseenter", () => setDesc(item.desc || "No description"));
-          btn.addEventListener("mouseleave", () => setDesc("Hover over an element to see its description"));
-
-          btn.addEventListener("click", () => {
-            const list = selections[centerName];
-            const i = list.indexOf(item.name);
-            if (i > -1) {
-              list.splice(i, 1);
-              btn.classList.remove("selected");
-            } else {
-              if (list.length >= MAX_PER_CENTER) {
-                alert(`You can select up to ${MAX_PER_CENTER} elements`);
-                return;
-              }
-              list.push(item.name);
-              btn.classList.add("selected");
-            }
-            document.getElementById("selCount").textContent = `${list.length} of ${MAX_PER_CENTER} selected`;
-          });
-
-          grid.appendChild(btn);
+    async function loadCenters() {
+      const centerSelect = document.getElementById("center");
+      centerSelect.innerHTML = "<option>Loading...</option>";
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=centers`);
+        const centers = await res.json();
+        centerSelect.innerHTML = "<option value=''>Select a Center</option>";
+        centers.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          centerSelect.appendChild(opt);
         });
-
-        container.appendChild(grid);
-      });
-
-      document.getElementById("btnPrev").disabled = current === 0;
-      document.getElementById("btnNext").textContent = current === centers.length - 1 ? "Submit" : "Next";
-    }
-
-    function nextCenter() {
-      if (current < centers.length - 1) {
-        current += 1;
-        loadCenter(current);
-      } else {
-        submitAll();
+      } catch (err) {
+        centerSelect.innerHTML = "<option>Error loading centers</option>";
       }
     }
 
-    function prevCenter() {
-      if (current > 0) {
-        current -= 1;
-        loadCenter(current);
+    async function startSurvey() {
+      const center = document.getElementById("center").value;
+      if (!center) {
+        alert("Please choose a center first.");
+        return;
+      }
+      currentCenter = center;
+      document.getElementById("intro").classList.add("hidden");
+      document.getElementById("survey").classList.remove("hidden");
+      document.getElementById("submitBtn").classList.remove("hidden");
+      await loadElements(center);
+    }
+
+    async function loadElements(center) {
+      const surveyDiv = document.getElementById("survey");
+      surveyDiv.innerHTML = "<p>Loading...</p>";
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=elements&center=${encodeURIComponent(center)}`);
+        const data = await res.json();
+        surveyDiv.innerHTML = "";
+        Object.keys(data).forEach(domain => {
+          const domainDiv = document.createElement("div");
+          domainDiv.className = "domain";
+          const h3 = document.createElement("h3");
+          h3.textContent = domain;
+          domainDiv.appendChild(h3);
+          data[domain].forEach(el => {
+            const div = document.createElement("div");
+            div.className = "checkbox-group";
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.value = el.name;
+            cb.id = el.name;
+            const label = document.createElement("label");
+            label.htmlFor = el.name;
+            label.textContent = el.name + (el.desc ? " - " + el.desc : "");
+            div.appendChild(cb);
+            div.appendChild(label);
+            domainDiv.appendChild(div);
+          });
+          surveyDiv.appendChild(domainDiv);
+        });
+      } catch (err) {
+        surveyDiv.innerHTML = "<p>Error loading elements.</p>";
       }
     }
 
-    async function submitAll() {
-      const payload = { ...participant, responses: selections };
+    async function submitSurvey() {
+      const checkboxes = document.querySelectorAll("#survey input[type='checkbox']:checked");
+      const selected = Array.from(checkboxes).map(cb => cb.value);
 
-      const res = await fetch(WEBAPP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      const payload = {
+        name: document.getElementById("name").value,
+        institution: document.getElementById("institution").value,
+        position: document.getElementById("position").value,
+        email: document.getElementById("email").value,
+        responses: { [currentCenter]: selected }
+      };
 
-      const text = await res.text();
-      if (text === "OK") {
-        show("pageCenter", false);
-        show("pageDone", true);
-      } else {
-        alert("Server error: " + text);
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const text = await res.text();
+        alert("Survey submitted successfully!");
+      } catch (err) {
+        alert("Error submitting survey: " + err.message);
       }
-    }
-
-    function setDesc(text) {
-      document.getElementById("descBox").textContent = text;
-    }
-
-    function show(id, on) {
-      document.getElementById(id).classList.toggle("active", !!on);
     }
   </script>
 </body>

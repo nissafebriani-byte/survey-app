@@ -3,221 +3,180 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Top Topics in Life Management</title>
+  <title>Element Survey</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
+      background: #f8f9fa;
+      color: #333;
+    }
+    header {
+      background: #0066cc;
+      color: white;
+      padding: 1rem;
       text-align: center;
     }
-
-    h1 {
-      background-color: #f8bcbc;
-      color: #222;
-      padding: 20px;
-      margin: 0;
-    }
-
-    p {
-      background-color: #f8bcbc;
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 4px;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      background: #fff;
-      padding: 20px;
+    main {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: left;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-
-    .form-section {
-      margin-top: 20px;
-    }
-
-    .form-section label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-
-    .form-section input, select {
+    label { font-weight: bold; }
+    select, input {
       width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
       border-radius: 5px;
+      border: 1px solid #ccc;
     }
-
-    button {
-      background-color: #3b5bfd;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    button:hover {
-      background-color: #2f49d1;
-    }
-
     .domain {
-      margin-top: 25px;
+      margin-top: 1.5rem;
+      border-top: 1px solid #eee;
+      padding-top: 1rem;
     }
-
-    .domain h3 {
-      background-color: #e0e0e0;
-      padding: 10px;
+    .element {
+      margin: 0.5rem 0;
+    }
+    button {
+      background: #0066cc;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
       border-radius: 5px;
+      cursor: pointer;
     }
-
-    .checkbox-group {
-      margin-bottom: 10px;
+    button:hover {
+      background: #004c99;
     }
-
-    .hidden {
-      display: none;
-    }
-
   </style>
 </head>
 <body>
-  <h1>Top Topics in Life Management</h1>
-  <p>Welcome to the Top Topics in Life Management Survey! Your task is to choose which elements you would prioritize buying if you had the money to pay.</p>
+  <header>
+    <h1>Element Survey</h1>
+  </header>
+  <main>
+    <form id="surveyForm">
+      <label for="name">Full Name:</label>
+      <input type="text" id="name" required>
 
-  <div class="container">
-    <div id="intro">
-      <div class="form-section">
-        <label for="name">Name</label>
-        <input id="name" placeholder="Enter your name" />
+      <label for="institution">Institution:</label>
+      <input type="text" id="institution" required>
 
-        <label for="institution">Institution</label>
-        <input id="institution" placeholder="Enter your institution" />
+      <label for="position">Position:</label>
+      <input type="text" id="position" required>
 
-        <label for="position">Position</label>
-        <input id="position" placeholder="Enter your position" />
+      <label for="email">Email:</label>
+      <input type="email" id="email" required>
 
-        <label for="email">Email</label>
-        <input id="email" placeholder="Enter your email" />
+      <label for="centerSelect">Select Center:</label>
+      <select id="centerSelect" required>
+        <option value="">Loading centers...</option>
+      </select>
 
-        <label for="center">Choose Center</label>
-        <select id="center"></select>
-      </div>
-      <button id="startBtn">Start</button>
-    </div>
+      <div id="elementsContainer"></div>
 
-    <div id="survey" class="hidden"></div>
-    <button id="submitBtn" class="hidden">Submit</button>
-  </div>
+      <button type="submit">Submit</button>
+    </form>
+  </main>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_mYYsaKGyDvGpmPiBCesb-OxUu2fz4RvcMzJnPbyK9dbxNq2_Ymd6CpSj0HdQYoVLWg/exec";
-    let currentCenter = "";
-    let responses = {};
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycSFCS3euQOEpvnm_VwWCUjLoDfAAGX9pkevDfLPTB_9njnELKhoMvlIeYrWKiTb8QLQ/exec";
 
-    document.addEventListener("DOMContentLoaded", () => {
-      loadCenters();
-      document.getElementById("startBtn").addEventListener("click", startSurvey);
-      document.getElementById("submitBtn").addEventListener("click", submitSurvey);
-    });
-
+    // Load centers
     async function loadCenters() {
-      const centerSelect = document.getElementById("center");
-      centerSelect.innerHTML = "<option>Loading...</option>";
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=centers`);
+        const res = await fetch(SCRIPT_URL + "?action=centers");
         const centers = await res.json();
-        centerSelect.innerHTML = "<option value=''>Select a Center</option>";
+        const select = document.getElementById("centerSelect");
+        select.innerHTML = '<option value="">Select a center</option>';
         centers.forEach(c => {
           const opt = document.createElement("option");
           opt.value = c;
           opt.textContent = c;
-          centerSelect.appendChild(opt);
+          select.appendChild(opt);
         });
       } catch (err) {
-        centerSelect.innerHTML = "<option>Error loading centers</option>";
+        alert("Failed to load centers: " + err);
       }
     }
 
-    async function startSurvey() {
-      const center = document.getElementById("center").value;
-      if (!center) {
-        alert("Please choose a center first.");
-        return;
-      }
-      currentCenter = center;
-      document.getElementById("intro").classList.add("hidden");
-      document.getElementById("survey").classList.remove("hidden");
-      document.getElementById("submitBtn").classList.remove("hidden");
-      await loadElements(center);
-    }
-
+    // Load elements for selected center
     async function loadElements(center) {
-      const surveyDiv = document.getElementById("survey");
-      surveyDiv.innerHTML = "<p>Loading...</p>";
+      const container = document.getElementById("elementsContainer");
+      container.innerHTML = "<p>Loading elements...</p>";
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=elements&center=${encodeURIComponent(center)}`);
+        const res = await fetch(SCRIPT_URL + "?action=elements&center=" + encodeURIComponent(center));
         const data = await res.json();
-        surveyDiv.innerHTML = "";
+        container.innerHTML = "";
         Object.keys(data).forEach(domain => {
-          const domainDiv = document.createElement("div");
-          domainDiv.className = "domain";
+          const div = document.createElement("div");
+          div.classList.add("domain");
           const h3 = document.createElement("h3");
           h3.textContent = domain;
-          domainDiv.appendChild(h3);
+          div.appendChild(h3);
           data[domain].forEach(el => {
-            const div = document.createElement("div");
-            div.className = "checkbox-group";
-            const cb = document.createElement("input");
-            cb.type = "checkbox";
-            cb.value = el.name;
-            cb.id = el.name;
-            const label = document.createElement("label");
-            label.htmlFor = el.name;
-            label.textContent = el.name + (el.desc ? " - " + el.desc : "");
-            div.appendChild(cb);
-            div.appendChild(label);
-            domainDiv.appendChild(div);
+            const p = document.createElement("div");
+            p.classList.add("element");
+            p.innerHTML = `
+              <label>
+                <input type="checkbox" name="element" value="${el.name}">
+                <strong>${el.name}</strong> — ${el.desc}
+              </label>`;
+            div.appendChild(p);
           });
-          surveyDiv.appendChild(domainDiv);
+          container.appendChild(div);
         });
       } catch (err) {
-        surveyDiv.innerHTML = "<p>Error loading elements.</p>";
+        container.innerHTML = "<p>Failed to load elements.</p>";
       }
     }
 
-    async function submitSurvey() {
-      const checkboxes = document.querySelectorAll("#survey input[type='checkbox']:checked");
-      const selected = Array.from(checkboxes).map(cb => cb.value);
+    // Handle form submission
+    document.getElementById("surveyForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-      const payload = {
-        name: document.getElementById("name").value,
-        institution: document.getElementById("institution").value,
-        position: document.getElementById("position").value,
-        email: document.getElementById("email").value,
-        responses: { [currentCenter]: selected }
-      };
+      const name = document.getElementById("name").value.trim();
+      const institution = document.getElementById("institution").value.trim();
+      const position = document.getElementById("position").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const center = document.getElementById("centerSelect").value;
+      if (!center) return alert("Please select a center.");
+
+      const responses = {};
+      const checked = document.querySelectorAll("input[name='element']:checked");
+      responses[center] = Array.from(checked).map(c => c.value);
+
+      const payload = { name, institution, position, email, responses };
 
       try {
         const res = await fetch(SCRIPT_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json" }
         });
         const text = await res.text();
-        alert("Survey submitted successfully!");
+        if (text.includes("OK")) {
+          alert("Thank you! Your response has been recorded.");
+          document.getElementById("surveyForm").reset();
+          document.getElementById("elementsContainer").innerHTML = "";
+        } else {
+          alert("Submission error: " + text);
+        }
       } catch (err) {
-        alert("Error submitting survey: " + err.message);
+        alert("Failed to submit: " + err);
       }
-    }
+    });
+
+    document.getElementById("centerSelect").addEventListener("change", (e) => {
+      const val = e.target.value;
+      if (val) loadElements(val);
+    });
+
+    loadCenters();
   </script>
 </body>
 </html>

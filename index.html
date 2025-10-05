@@ -1,202 +1,220 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
   <title>Element Survey</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f2f4f8;
-      padding: 20px;
+      margin: 30px;
+      max-width: 900px;
     }
-    .container {
-      background: white;
-      max-width: 700px;
-      margin: auto;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    .center-section, .form-section {
+      margin-bottom: 25px;
     }
-    h1 { text-align: center; color: #333; }
-    button {
-      background-color: #e6e6e6;
-      border: none;
+    .domain {
+      margin-bottom: 20px;
+    }
+    .elements {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .element-btn {
       padding: 8px 12px;
-      margin: 5px;
+      border: 1px solid #aaa;
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      background-color: #f4f4f4;
+      transition: 0.2s;
       position: relative;
     }
-    button:hover::after {
+    .element-btn.selected {
+      background-color: #cce5ff;
+      border-color: #004085;
+      color: #004085;
+    }
+    .element-btn:hover::after {
       content: attr(data-desc);
       position: absolute;
-      top: 110%;
-      left: 50%;
-      transform: translateX(-50%);
       background: #333;
       color: #fff;
-      padding: 8px;
+      padding: 6px 10px;
       border-radius: 6px;
       white-space: pre-wrap;
-      font-size: 12px;
-      width: 220px;
-      z-index: 10;
+      top: 120%;
+      left: 0;
+      width: 250px;
+      z-index: 5;
+      font-size: 13px;
     }
-    button.selected {
-      background-color: #4caf50;
-      color: white;
+    button {
+      padding: 10px 15px;
+      cursor: pointer;
     }
-    .warning { color: red; font-weight: bold; }
-    .hidden { display: none; }
-    .domain { margin-top: 15px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Element Survey</h1>
+  <h2>Element Survey</h2>
 
-    <div id="info-form">
-      <p><b>Name:</b><br><input id="name" required></p>
-      <p><b>Email:</b><br><input id="email" required></p>
-      <p><b>Institution:</b><br><input id="institution" required></p>
-      <p><b>Position:</b><br><input id="position" required></p>
-      <button id="startBtn">Start Survey</button>
-    </div>
-
-    <div id="survey" class="hidden">
-      <h2 id="center-title"></h2>
-      <div id="domains"></div>
-      <p id="warning" class="warning"></p>
-      <button id="submitCenterBtn">Submit This Center</button>
-    </div>
-
-    <div id="done" class="hidden">
-      <h2>Thank you! Your responses have been submitted.</h2>
-    </div>
+  <div class="form-section">
+    <label>Name: <input type="text" id="name"></label><br><br>
+    <label>Email: <input type="email" id="email"></label><br><br>
+    <label>Institution: <input type="text" id="institution"></label><br><br>
+    <label>Position: <input type="text" id="position"></label><br><br>
   </div>
 
+  <div class="center-section">
+    <label for="centerSelect">Choose Center:</label>
+    <select id="centerSelect">
+      <option value="">-- Select Center --</option>
+    </select>
+  </div>
+
+  <div id="elementsContainer"></div>
+
+  <div>
+    <button id="submitBtn">Submit</button>
+  </div>
+
+  <p id="status"></p>
+
   <script>
-    const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxO_ofoU8MY0tOranDqgMzVGLdGzw_l-wWugTpydaNVhLzrjebvBH9saIbXzE8qOepvww/exec";
-    let centers = [];
-    let currentCenterIndex = 0;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxO_ofoU8MY0tOranDqgMzVGLdGzw_l-wWugTpydaNVhLzrjebvBH9saIbXzE8qOepvww/exec";
+    const MAX_SELECTION = 20;
+
+    let currentCenter = "";
     let responses = {};
+    let elementsByDomain = {};
 
-    async function fetchCenters() {
-      const res = await fetch(DEPLOY_URL + "?action=getCenters");
-      return res.json();
-    }
+    // Load centers
+    fetch(`${SCRIPT_URL}?action=centers`)
+      .then(r => r.json())
+      .then(centers => {
+        const select = document.getElementById("centerSelect");
+        centers.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          select.appendChild(opt);
+        });
+      });
 
-    async function fetchElements(center) {
-      const res = await fetch(DEPLOY_URL + "?action=getElements&center=" + encodeURIComponent(center));
-      return res.json();
-    }
+    document.getElementById("centerSelect").addEventListener("change", async e => {
+      const newCenter = e.target.value;
+      const status = document.getElementById("status");
 
-    document.getElementById("startBtn").onclick = async () => {
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const inst = document.getElementById("institution").value.trim();
-      const pos = document.getElementById("position").value.trim();
-
-      if (!name || !email || !inst || !pos) {
-        alert("Please fill all fields first!");
+      if (currentCenter && !responses[currentCenter]) {
+        alert("Please submit your selection for the current center before moving to another.");
+        e.target.value = currentCenter;
         return;
       }
 
-      centers = await fetchCenters();
-      if (!centers.length) {
-        alert("No centers found.");
-        return;
-      }
+      currentCenter = newCenter;
+      document.getElementById("elementsContainer").innerHTML = "";
+      if (!newCenter) return;
 
-      document.getElementById("info-form").classList.add("hidden");
-      document.getElementById("survey").classList.remove("hidden");
-      loadCenter();
-    };
+      const res = await fetch(`${SCRIPT_URL}?action=elements&center=${encodeURIComponent(newCenter)}`);
+      elementsByDomain = await res.json();
+      renderElements();
+      status.textContent = "";
+    });
 
-    async function loadCenter() {
-      const center = centers[currentCenterIndex];
-      document.getElementById("center-title").textContent = "Center: " + center;
-      document.getElementById("warning").textContent = "";
-      const data = await fetchElements(center);
-      const container = document.getElementById("domains");
+    function renderElements() {
+      const container = document.getElementById("elementsContainer");
       container.innerHTML = "";
 
-      Object.keys(data).forEach(domain => {
+      for (const domain in elementsByDomain) {
         const div = document.createElement("div");
         div.className = "domain";
+
         const h3 = document.createElement("h3");
         h3.textContent = domain;
         div.appendChild(h3);
 
-        data[domain].forEach(el => {
-          const btn = document.createElement("button");
+        const elemsDiv = document.createElement("div");
+        elemsDiv.className = "elements";
+
+        elementsByDomain[domain].forEach(el => {
+          const btn = document.createElement("div");
+          btn.className = "element-btn";
           btn.textContent = el.name;
-          btn.dataset.desc = el.desc;
-          btn.onclick = () => toggleElement(center, el.name, btn);
-          div.appendChild(btn);
+          btn.setAttribute("data-desc", el.desc);
+
+          btn.addEventListener("click", () => {
+            toggleElement(el.name, btn);
+          });
+
+          elemsDiv.appendChild(btn);
         });
+
+        div.appendChild(elemsDiv);
         container.appendChild(div);
-      });
+      }
     }
 
-    function toggleElement(center, name, btn) {
-      if (!responses[center]) responses[center] = [];
-      const arr = responses[center];
-      const idx = arr.indexOf(name);
+    function toggleElement(name, btn) {
+      const selected = responses[currentCenter] || [];
+      const index = selected.indexOf(name);
 
-      if (idx === -1) {
-        if (arr.length >= 20) {
-          document.getElementById("warning").textContent = "You can only choose up to 20 elements for this center.";
+      if (index === -1) {
+        if (selected.length >= MAX_SELECTION) {
+          alert("You can only select up to 20 elements per center.");
           return;
         }
-        arr.push(name);
+        selected.push(name);
         btn.classList.add("selected");
       } else {
-        arr.splice(idx, 1);
+        selected.splice(index, 1);
         btn.classList.remove("selected");
       }
-      document.getElementById("warning").textContent = "";
+
+      responses[currentCenter] = selected;
     }
 
-    document.getElementById("submitCenterBtn").onclick = async () => {
-      const center = centers[currentCenterIndex];
-      if (!responses[center] || responses[center].length === 0) {
-        alert("Please select at least one element before submitting.");
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const institution = document.getElementById("institution").value.trim();
+      const position = document.getElementById("position").value.trim();
+      const status = document.getElementById("status");
+
+      if (!name || !email || !institution || !position) {
+        alert("Please fill out all personal information fields.");
         return;
       }
 
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const inst = document.getElementById("institution").value.trim();
-      const pos = document.getElementById("position").value.trim();
+      if (!currentCenter || !responses[currentCenter] || responses[currentCenter].length === 0) {
+        alert("Please select at least one element for the current center.");
+        return;
+      }
 
       const payload = {
-        name, email, institution: inst, position: pos,
-        responses: { [center]: responses[center] }
+        name,
+        email,
+        institution,
+        position,
+        responses
       };
 
-      try {
-        const res = await fetch(DEPLOY_URL + "?action=saveAllResponses", {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "application/json" }
-        });
-        if (!res.ok) throw new Error("Network error");
-        alert("Responses for " + center + " submitted!");
+      status.textContent = "Submitting...";
 
-        currentCenterIndex++;
-        if (currentCenterIndex < centers.length) {
-          loadCenter();
-        } else {
-          document.getElementById("survey").classList.add("hidden");
-          document.getElementById("done").classList.remove("hidden");
-        }
-      } catch (e) {
-        alert("Failed to submit — " + e.message);
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          mode: "no-cors"
+        });
+
+        responses[currentCenter] = responses[currentCenter]; // lock current center
+        alert("Submission successful for " + currentCenter);
+        status.textContent = "Submitted successfully!";
+      } catch (err) {
+        alert("Failed to submit. Please try again.");
+        status.textContent = "Submission failed.";
       }
-    };
+    });
   </script>
 </body>
 </html>

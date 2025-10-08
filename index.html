@@ -39,7 +39,7 @@ input, select, button { width:100%; padding:10px; margin-top:10px; border-radius
 
 <label for="centerSelect">Select Center</label>
 <select id="centerSelect">
-<option value="">Loading centers...</option>
+  <option value="">Loading centers...</option>
 </select>
 
 <div id="elementsGrid"></div>
@@ -48,7 +48,7 @@ input, select, button { width:100%; padding:10px; margin-top:10px; border-radius
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyaZzolVY_ihmF57UYe9rkoiChqkaCTtOw54t9Gpm9yFP8jD70pI2CA356x1Ratk1nSlg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw8HBtxIyvLC-E2nRQ_oWkyZF0Yzq-slA7i9_4-8l8h-o883h6H8AOAMX1jdGfPp3yN8g/exec"; // <<< REPLACE with your web app URL (the /exec URL)
 
 let selectedCenter = "";
 let selectedElements = {};
@@ -69,6 +69,7 @@ async function loadCenters() {
   } catch(err) {
     console.error(err);
     document.getElementById("centerSelect").innerHTML = '<option value="">Failed to load centers</option>';
+    document.getElementById("warning").textContent = "Failed to load centers — check web app URL & deployment.";
   }
 }
 
@@ -82,6 +83,7 @@ async function loadElements(center) {
   } catch(err) {
     grid.innerHTML = "Failed to load elements";
     console.error(err);
+    document.getElementById("warning").textContent = "Failed to load elements — check web app URL & deployment.";
   } finally {
     document.getElementById("submitBtn").disabled = false;
   }
@@ -151,19 +153,23 @@ document.getElementById("centerSelect").addEventListener("change", async (e) => 
   }
 });
 
-// ✅ FIXED SUBMIT BUTTON SECTION ONLY
 document.getElementById("submitBtn").addEventListener("click", async () => {
   if (!selectedCenter) return alert("Select a center first.");
   const responses = selectedElements[selectedCenter] || [];
   if (responses.length === 0) return alert("Please select at least one element.");
 
-  const payload = {
-    name: document.getElementById("name").value,
-    institution: document.getElementById("institution").value,
-    position: document.getElementById("position").value,
-    email: document.getElementById("email").value,
-    responses: { [selectedCenter]: responses }
-  };
+  const name = document.getElementById("name").value;
+  const institution = document.getElementById("institution").value;
+  const position = document.getElementById("position").value;
+  const email = document.getElementById("email").value;
+
+  // build URL-encoded body (avoids CORS preflight)
+  const form = new URLSearchParams();
+  form.append('name', name);
+  form.append('institution', institution);
+  form.append('position', position);
+  form.append('email', email);
+  form.append('responses', JSON.stringify({ [selectedCenter]: responses }));
 
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
@@ -172,8 +178,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   try {
     const res = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body: form.toString()
     });
 
     const text = await res.text();

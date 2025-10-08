@@ -162,7 +162,22 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
     position: document.getElementById("position").value,
     email: document.getElementById("email").value,
     responses: { [selectedCenter]: responses }
+  };document.getElementById("submitBtn").addEventListener("click", async () => {
+  if (!selectedCenter) return alert("Select a center first.");
+  const responses = selectedElements[selectedCenter] || [];
+
+  const payload = {
+    name: document.getElementById("name").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    institution: document.getElementById("institution").value.trim(),
+    position: document.getElementById("position").value.trim(),
+    responses: { [selectedCenter]: responses }
   };
+
+  if (!payload.name || !payload.email || !payload.institution || !payload.position) {
+    alert("Please fill in all participant information before submitting.");
+    return;
+  }
 
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
@@ -171,24 +186,29 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   try {
     const res = await fetch(API_URL, {
       method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
-    const result = await res.json();
-    if(result.status === "success") {
+
+    const text = await res.text();
+    let result;
+    try { result = JSON.parse(text); } catch { result = { status: text }; }
+
+    if (result.status === "success") {
       hasSubmitted[selectedCenter] = true;
       alert("Responses submitted successfully for " + selectedCenter);
     } else {
-      alert("Failed to submit: " + result.message);
+      alert("Failed to submit: " + (result.message || text));
     }
-  } catch(err) {
-    alert("Failed to submit responses. Check console.");
+  } catch (err) {
     console.error(err);
+    alert("Failed to submit responses. Please check your connection or API permissions.");
   } finally {
     btn.disabled = false;
     btn.textContent = "Submit Responses";
   }
 });
+
 
 loadCenters();
 </script>

@@ -151,44 +151,7 @@ document.getElementById("centerSelect").addEventListener("change", async (e) => 
   }
 });
 
-document.getElementById("submitBtn").addEventListener("click", async () => {
-  if (!selectedCenter) return alert("Select a center first.");
-  const responses = selectedElements[selectedCenter] || [];
-  if (responses.length === 0) return alert("Please select at least one element.");
-
-  const payload = {
-    name: document.getElementById("name").value,
-    institution: document.getElementById("institution").value,
-    position: document.getElementById("position").value,
-    email: document.getElementById("email").value,
-    responses: { [selectedCenter]: responses }
-  };document.getElementById("submitBtn").addEventListener("click", async () => {
-  if (!selectedCenter) return alert("Select a center first.");
-  const responses = selectedElements[selectedCenter] || [];
-
-  const payload = {
-    name: document.getElementById("name").value.trim(),
-    email: document.getElementById("email").value.trim(),
-    institution: document.getElementById("institution").value.trim(),
-    position: document.getElementById("position").value.trim(),
-    responses: { [selectedCenter]: responses }
-  };
-
-  if (!payload.name || !payload.email || !payload.institution || !payload.position) {
-    alert("Please fill in all participant information before submitting.");
-    return;
-  }
-
-  const btn = document.getElementById("submitBtn");
-  btn.disabled = true;
-  btn.textContent = "Submitting...";
-
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+document.getElementById("submitBtn").addEventListener("click", async () => { if (!selectedCenter) return alert("Select a center first."); const responses = selectedElements[selectedCenter] || []; if (responses.length === 0) return alert("Please select at least one element."); const payload = { name: document.getElementById("name").value, institution: document.getElementById("institution").value, position: document.getElementById("position").value, email: document.getElementById("email").value, responses: { [selectedCenter]: responses } }; const btn = document.getElementById("submitBtn"); btn.disabled = true; btn.textContent = "Submitting..."; try { const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "application/json" } }); const result = await res.json(); if(result.status === "success") { hasSubmitted[selectedCenter] = true; alert("Responses submitted successfully for " + selectedCenter); } else { alert("Failed to submit: " + result.message); } } catch(err) { alert("Failed to submit responses. Check console."); console.error(err); } finally { btn.disabled = false; btn.textContent = "Submit Responses"; } });
 
     const text = await res.text();
     let result;
